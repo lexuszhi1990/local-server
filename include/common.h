@@ -9,11 +9,15 @@
 #include <unistd.h>
 #include <dirent.h>
 #include <time.h>
+#include <pthread.h>
+#include <semaphore.h>
 #include <sys/stat.h>
 #include <sys/wait.h>
 #include <sys/mman.h>
-#include <pthread.h>
-#include <semaphore.h>
+#include <sys/epoll.h>
+#include <sys/poll.h>
+#include <sys/ioctl.h>
+#include <sys/types.h>
 #include <sys/socket.h>
 #include <arpa/inet.h>
 
@@ -30,7 +34,7 @@
 #define SHORT_BUF 128
 #define QLEN 20
 #define SEC 5
-#define TH_NUM 3
+#define TH_NUM 2
 #define ROOT_PATH "../jpg"
 
 #define TCP_PORT 8000

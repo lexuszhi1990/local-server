@@ -1,6 +1,5 @@
 #include "common.h"
 
-
 pthread_rwlock_t rwlock;
 pthread_mutex_t psyc;
 sbuf_t sbuf;
@@ -20,7 +19,7 @@ void *serv_thread(void *vargp)
     printf("one serv thread is created...\n");
 #endif
     for(;;){
-       res = recv(connfd, buf, SHORT_BUF, 0);
+        res = recv(connfd, buf, SHORT_BUF, 0);
         if (res == -1) {
             delay_sys("fail to recv\n");
             break;
@@ -53,7 +52,7 @@ void *serv_thread(void *vargp)
             break;
         }
     }
-    
+
     printf("cilent %d is left...\n", connfd);
     close(connfd);
     return NULL;
@@ -61,35 +60,39 @@ void *serv_thread(void *vargp)
 
 void *do_reg(void *arg)
 {
-	int sfd, nread, confd, n; 
-	char buf[BUF_SIZE];
-	struct sockaddr_in cli_addr;		
-	arg_t *rarg; 
-  socklen_t len = sizeof(struct sockaddr_in); 
-  pthread_t tid;
+    int sfd, confd;
+    struct sockaddr_in cli_addr;		
+    arg_t *rarg; 
+    socklen_t len = sizeof(struct sockaddr_in); 
+    pthread_t tid;
 
-	rarg = (arg_t *)arg;
-	sfd = init_tcp_sock(rarg->port, rarg->serv_ip);
-	if(sfd == -1) {
-    err_sys("failed to init tcp socket...\n");
-  }
-	
+    Pthread_mutex_init(&psyc, NULL);
+    sbuf_init(&sbuf, SHORT_BUF);
+
+    rarg = (arg_t *)arg;
+    sfd = init_tcp_sock(rarg->port, rarg->serv_ip);
+    if(sfd == -1) {
+        err_sys("failed to init tcp socket...\n");
+    }
+
 #ifdef DEBUG		
-  printf("init the tcp sock\n"); /* for debuging... */
+    printf("init the tcp sock\n"); /* for debuging... */
 #endif
-	while(1){
-    Pthread_mutex_lock(&psyc);
-    confd = Accept(sfd, (SA *)&cli_addr, &len);
-    Pthread_mutex_unlock(&psyc);
-    Pthread_create(&tid, NULL, serv_thread, &confd);
+    while(1){
+        Pthread_mutex_lock(&psyc);
+        confd = Accept(sfd, (SA *)&cli_addr, &len);
+        Pthread_mutex_unlock(&psyc);
+        Pthread_create(&tid, NULL, serv_thread, &confd);
 #ifdef DEBUG		
-    printf("one client come to server: %s\n",
-            inet_ntoa(cli_addr.sin_addr));
+        printf("one client come to server: %s\n",
+                inet_ntoa(cli_addr.sin_addr));
 #endif
 
-  }
+    }
 
-  close(sfd);
-  return NULL;
+    Pthread_mutex_destroy(&psyc);
+    sbuf_deinit(&sbuf);
+    close(sfd);
+    return NULL;
 }
 

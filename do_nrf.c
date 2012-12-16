@@ -1,44 +1,5 @@
 #include "common.h"
 
-void *nrf_send(void *argwr)
-{
-    int cmd;
-    while (1) {
-      cmd = sbuf_remove(&sbuf);
-      printf("get the cmd : %d...\n", cmd);
-    }
-
-    return (void *)1;
-}
-
-void *nrf_read(void *argrd)
-{
-
-
-  return (void *)1;
-}
-
-
-void *do_nrf(void *arg)
-{
-    pthread_t tid[2];
-
-    pthread_create(&tid[0], NULL, nrf_send, NULL);
-    pthread_create(&tid[1], NULL, nrf_read, NULL);
-    pthread_join(tid[0], NULL);
-    pthread_join(tid[1], NULL);
-
-    return 0;
-}
-
-
-
-
-#if 0
-#include "common.h"
-
-#include "sock.h"
-
 /* ioctl 相关命令 */
 #define READ_STATUS                0x0011
 #define READ_FIFO                  0x0012
@@ -57,12 +18,11 @@ volatile unsigned char data_pipe = 0;
 volatile unsigned char data_channel = 0;
 unsigned char TxBuf[Bufsize] = {0x05, 0x06, 0x07, 0x08, 0x09};
 unsigned char RxBuf[Bufsize] = {0};
-
+static int nrf_fd;
 
 /*  在RxBuf中最后一个字节，也就是第4个字节，存放的是发送端的编号，
  *  从这个编号，便可在TX_ADDRESS_LIST中查找出对应的发送端地址
  */
-#if 0 
 void nrf2401_send()
 {
     data_channel = RxBuf[Bufsize - 1];
@@ -71,7 +31,18 @@ void nrf2401_send()
     write(nrf_fd, TxBuf, Bufsize);
 }
 
-#endif
+
+
+void *nrf_send(void *argwr)
+{
+    int cmd;
+    while (1) {
+      cmd = sbuf_remove(&sbuf);
+      printf("get the cmd : %d...\n", cmd);
+    }
+
+    return (void *)1;
+}
 
 void nrf24L01_ctrl(int data, int nrf_fd)
 {
@@ -105,34 +76,24 @@ int nrf_init(struct epoll_event *nrf_event)
     }
     printf("open /dev/nrf24l01 success. fd is %x \n", nrf_fd);
 
-    //just for debug
+    //just clean the status
     ioctl(nrf_fd, REG_RESET, NULL);
-
-    (*nrf_event).data.fd = nrf_fd;
-    (*nrf_event).events = EPOLLIN | EPOLLOUT;
 
     return nrf_fd;
 }
 
 
-int main(void)
+void *nrf_read(void *argrd)
 {
+
     int i, ret;
     int ep_fd;
-    int nrf_fd, sock_fd;
-    struct epoll_event nrf_event, sock_event, *events;
+    struct epoll_event nrf_event, *events;
 
     //init nrf24l01
     nrf_fd = nrf_init(&nrf_event);
-
-    //init socket
-    sock_fd = init_tcp_sock(8088, 0);
-    if (sock_fd < 0) {
-        perror("failed to init socket");
-        exit(1);
-    }
-    sock_event.data.fd = sock_fd;
-    sock_event.events = EPOLLIN | EPOLLOUT;
+    nrf_event.data.fd = nrf_fd;
+    nrf_event.events = EPOLLIN;
 
     /* init epoll struct */
     ep_fd = epoll_create(EpSize);
@@ -147,13 +108,8 @@ int main(void)
         perror("failed to epoll_ctl");
         exit(1);
     }
-    ret = epoll_ctl(ep_fd, EPOLL_CTL_ADD, sock_fd, &sock_event);
-    if (ret) {
-        perror("failed to epoll_ctl");
-        exit(1);
-    }
 
-    events = malloc(sizeof(struct epoll_event) * MAX_EVENTS);
+    events = Malloc(sizeof(struct epoll_event) * MAX_EVENTS);
     if (!events) {
         perror("failed to malloc events");
         exit(1);
@@ -162,10 +118,8 @@ int main(void)
     write(nrf_fd, TxBuf, Bufsize);
     while(1) {
         ret = epoll_wait(ep_fd, events, MAX_EVENTS, -1);
-        printf("return mask = %d\n", ret);
         if (ret < 0) {
             perror("failed to wait");
-            free(events);
             break;
         }
         for (i = 0; i < ret; i++) {
@@ -173,9 +127,6 @@ int main(void)
                     events[i].events, events[i].data.fd);
             if (events[i].data.fd == nrf_fd) {
                 nrf24L01_ctrl(events[i].events, nrf_fd);
-            }
-            if (events[i].data.fd == sock_fd) {
-                socket_ctrl(events[i].events, sock_fd);  
             }
         }
         printf("one round is over\n");
@@ -186,5 +137,17 @@ int main(void)
 
     return 0;
 }
-#endif
+
+
+void *do_nrf(void *arg)
+{
+    pthread_t tid[2];
+
+    pthread_create(&tid[0], NULL, nrf_send, NULL);
+    pthread_create(&tid[1], NULL, nrf_read, NULL);
+    pthread_join(tid[0], NULL);
+    pthread_join(tid[1], NULL);
+
+    return 0;
+}
 
