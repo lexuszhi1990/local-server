@@ -30,25 +30,30 @@ void *serv_thread(void *vargp)
 
         buf[res] = 0;
         printf("Have receve the commind : %s\n", buf);
-        if (strcmp(buf, "lexus1") == 0) {
-            printf("lexus1 forward\n");
-            sbuf_insert(&sbuf, 1);
-        }
-        if (strcmp(buf, "lexus2") == 0) {
-            printf("lexus2 back\n");
+        if (strcmp(buf, "stop") == 0) {
+            printf("lexus1 stop\n");
             sbuf_insert(&sbuf, 2);
         }
-        if (strcmp(buf, "lexus3") == 0) {
-            printf("lexus3 right\n");
-            sbuf_insert(&sbuf, 3);
-        }
-        if (strcmp(buf, "lexus4") == 0) {
-            printf("lexus4 left\n");
-            sbuf_insert(&sbuf, 4);
-        }
-        if (strcmp(buf, "lexusend") == 0) {
-            printf("lexusend end\n");
+        if (strcmp(buf, "left") == 0) {
+            printf("lexus2 left\n");
             sbuf_insert(&sbuf, 5);
+        }
+        if (strcmp(buf, "right") == 0) {
+            printf("lexus3 right\n");
+            sbuf_insert(&sbuf, 6);
+        }
+        if (strcmp(buf, "slow") == 0) {
+            printf("lexus4 slow\n");
+            sbuf_insert(&sbuf, 7);
+        }
+        if (strcmp(buf, "normal") == 0) {
+            printf("lexus normal\n");
+            sbuf_insert(&sbuf, 8);
+            break;
+        }
+        if (strcmp(buf, "end") == 0) {
+            printf("lexusend end\n");
+            sbuf_insert(&sbuf, 9);
             break;
         }
     }

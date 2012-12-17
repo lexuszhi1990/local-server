@@ -40,7 +40,7 @@
 #define TCP_PORT 8000
 #define UDP_PORT 8080
 #define RENEW_PORT 8060
-#define SERV_IP "192.168.1.4"
+#define SERV_IP "192.168.1.11"
 
 #define RENEW_MSG "need renew"
 #define FIRST_MSG "first renew"
