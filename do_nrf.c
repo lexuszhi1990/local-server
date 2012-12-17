@@ -29,7 +29,7 @@ void send_ctrl(int cmd)
 {
     switch (cmd) {
         case 1 :
-            TxBuf[0] = 0x1;
+            TxBuf[0] = 0x2;
             break;
         case 2 :
             TxBuf[0] = 0x1;
@@ -41,10 +41,19 @@ void send_ctrl(int cmd)
             TxBuf[0] = 0x1;
             break;
         case 5 :
-            TxBuf[0] = 0x1;
+            TxBuf[0] = 0x5;
             break;
         case 6 :
-            TxBuf[0] = 0x1;
+            TxBuf[0] = 0x6;
+            break;
+        case 7 :
+            TxBuf[0] = 0x7;
+            break;
+        case 8 :
+            TxBuf[0] = 0x8;
+            break;
+        case 9 :
+            TxBuf[0] = 0x9;
             break;
         default:break;
     }
@@ -70,8 +79,6 @@ void read_ctrl(int data, int nrf_fd)
             Sem_post(&nrf_sem);
             //Pthread_mutex_unlock(&psyc);
 
-            data_pipe = (unsigned char)((data & 0xf00) >> 8);
-            printf("have a msg to read from pipe %d...\n", data_pipe);
             printf("1 > %x, 2 > %x, 3 > %x, 4 > %x, channel > %x\n", \
                     RxBuf[0], RxBuf[1], RxBuf[2], RxBuf[3], RxBuf[4]);
             break;
@@ -152,6 +159,9 @@ void *nrf_read(void *argrd)
             printf("event= 0x%x, on fd = 0x%x\n", 
                     events[i].events, events[i].data.fd);
             if (events[i].data.fd == nrf_fd) {
+                data_pipe = (unsigned char)((events[i].events & 0xf0) >> 4);
+                printf("pipd %x have a msg to read from pipe %d...\n",
+                                events[i].events, data_pipe);
                 read_ctrl(events[i].events, nrf_fd);
             }
         }
