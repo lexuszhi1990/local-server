@@ -1,5 +1,5 @@
-#ifndef DO_H_
-#define DO_H_
+#ifndef DO_REG_H_
+#define DO_REG_H_
 
 
 typedef struct
@@ -10,9 +10,13 @@ typedef struct
 
 typedef void *(*tfn_t)(void *);
 
-extern pthread_rwlock_t rwlock;
-extern pthread_mutex_t psyc;
+typedef struct 
+{
+  unsigned char temprature[2];
+}home_stat;
+
 extern sbuf_t sbuf;
+extern home_stat hstat;
 
 extern void *do_reg(void *arg); 
 

@@ -2,7 +2,42 @@
 
 pthread_rwlock_t rwlock;
 pthread_mutex_t psyc;
+
 sbuf_t sbuf;
+home_stat hstat;
+
+int tasks(char* buf, int cfd)
+{
+
+    if (strcmp(buf, "stop") == 0) {
+        printf("lexus1 stop\n");
+        sbuf_insert(&sbuf, 2);
+    }else if (strcmp(buf, "left") == 0) {
+        printf("lexus2 left\n");
+        sbuf_insert(&sbuf, 5);
+    }else if (strcmp(buf, "right") == 0) {
+        printf("lexus3 right\n");
+        sbuf_insert(&sbuf, 6);
+    }else if (strcmp(buf, "low") == 0) {
+        printf("lexus4 slow\n");
+        sbuf_insert(&sbuf, 7);
+    }else if (strcmp(buf, "normal") == 0) {
+        printf("lexus normal\n");
+        sbuf_insert(&sbuf, 8);
+    }else if (strcmp(buf, "high") == 0) {
+        printf("lexus high\n");
+        sbuf_insert(&sbuf, 9);
+    }else if (strcmp(buf, "end") == 0) {
+        printf("lexusend end\n");
+        sbuf_insert(&sbuf, 0x10);
+        
+        return -1;
+    }
+
+    write(cfd, hstat.temprature, 2);
+
+    return 0;
+}
 
 void *serv_thread(void *vargp)
 {
@@ -16,7 +51,7 @@ void *serv_thread(void *vargp)
 
     Pthread_detach(pthread_self());
 #ifdef DEBUG
-    printf("one serv thread is created...\n");
+    printf("one service thread is created...\n");
 #endif
     for(;;){
         res = recv(connfd, buf, SHORT_BUF, 0);
@@ -27,35 +62,11 @@ void *serv_thread(void *vargp)
             delay_sys("the connect broken\n"); 
             break;
         }
-
         buf[res] = 0;
         printf("Have receve the commind : %s\n", buf);
-        if (strcmp(buf, "stop") == 0) {
-            printf("lexus1 stop\n");
-            sbuf_insert(&sbuf, 2);
-        }
-        if (strcmp(buf, "left") == 0) {
-            printf("lexus2 left\n");
-            sbuf_insert(&sbuf, 5);
-        }
-        if (strcmp(buf, "right") == 0) {
-            printf("lexus3 right\n");
-            sbuf_insert(&sbuf, 6);
-        }
-        if (strcmp(buf, "slow") == 0) {
-            printf("lexus4 slow\n");
-            sbuf_insert(&sbuf, 7);
-        }
-        if (strcmp(buf, "normal") == 0) {
-            printf("lexus normal\n");
-            sbuf_insert(&sbuf, 8);
-            break;
-        }
-        if (strcmp(buf, "end") == 0) {
-            printf("lexusend end\n");
-            sbuf_insert(&sbuf, 9);
-            break;
-        }
+
+        if( tasks(buf, connfd) < 0) 
+          break;
     }
 
     printf("cilent %d is left...\n", connfd);

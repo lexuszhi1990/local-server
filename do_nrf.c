@@ -65,14 +65,12 @@ void send_ctrl(int cmd)
     //ioctl(nrf_fd, SET_RXMODE, NULL);
     Sem_post(&nrf_sem);
     printf("TxBuf : %d\n", TxBuf[0]);
-    sleep(1);
 }
 
 
 
 void read_ctrl(int data)
 {
-
     switch ( data & 0x0f) {
         case POLLIN:
             Sem_wait(&nrf_sem);
@@ -80,8 +78,21 @@ void read_ctrl(int data)
             //ioctl(nrf_fd, SET_RXMODE, NULL);
             Sem_post(&nrf_sem);
 
-            printf("1 > %x, 2 > %x, 3 > %x, 4 > %x, channel > %x\n", \
-                    RxBuf[0], RxBuf[1], RxBuf[2], RxBuf[3], RxBuf[4]);
+            printf("1 > %x, 2 > %x, 3 > %x, 4 > %x, channel > %x, res : %d\n", \
+                    RxBuf[0], RxBuf[1], RxBuf[2], RxBuf[3], RxBuf[4] );
+
+
+            hstat.temprature[0] = RxBuf[0];
+            hstat.temprature[1] = RxBuf[1];
+
+            unsigned short int temp = 0;
+            float vis = RxBuf[0] & 0x04;
+            temp = RxBuf[0] & 0x40;
+            temp |= (RxBuf[1] << 8);
+            temp = temp >> 4;
+            vis = (float)temp + vis/16;
+            printf("the temp is %f\n", vis);
+
             break;
         case POLLOUT:
             printf("send ok...\n");
