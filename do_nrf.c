@@ -4,6 +4,8 @@
 #define READ_STATUS                0x0011
 #define READ_FIFO                  0x0012
 #define WRITE_STATUS               0x0211
+#define SET_TXMODE                 0x0221
+#define SET_RXMODE                 0x0222
 #define RX_FLUSH                   0x0300
 #define TX_FLUSH                   0x0310
 #define WRITE_DATA_CHANNEL         0x0400
@@ -58,26 +60,25 @@ void send_ctrl(int cmd)
         default:break;
     }
     Sem_wait(&nrf_sem);
-    //Pthread_mutex_lock(&psyc);
     //ioctl(nrf_fd, WRITE_DATA_CHANNEL, data_pipe);
     write(nrf_fd, TxBuf, Bufsize);
-    //Pthread_mutex_unlock(&psyc);
+    //ioctl(nrf_fd, SET_RXMODE, NULL);
     Sem_post(&nrf_sem);
     printf("TxBuf : %d\n", TxBuf[0]);
+    sleep(1);
 }
 
 
 
-void read_ctrl(int data, int nrf_fd)
+void read_ctrl(int data)
 {
 
     switch ( data & 0x0f) {
         case POLLIN:
-            //Pthread_mutex_lock(&psyc);
             Sem_wait(&nrf_sem);
             read(nrf_fd, RxBuf, Bufsize);
+            //ioctl(nrf_fd, SET_RXMODE, NULL);
             Sem_post(&nrf_sem);
-            //Pthread_mutex_unlock(&psyc);
 
             printf("1 > %x, 2 > %x, 3 > %x, 4 > %x, channel > %x\n", \
                     RxBuf[0], RxBuf[1], RxBuf[2], RxBuf[3], RxBuf[4]);
@@ -113,6 +114,7 @@ int nrf_init(struct epoll_event *nrf_event)
 void *nrf_send(void *argwr)
 {
     int cmd;
+    sleep(1);
     while (1) {
         cmd = sbuf_remove(&sbuf);
         printf("come to a cmd\n");
@@ -133,7 +135,7 @@ void *nrf_read(void *argrd)
     //init nrf24l01
     nrf_fd = nrf_init(&nrf_event);
     nrf_event.data.fd = nrf_fd;
-    nrf_event.events = EPOLLIN;  // | EPOLLOUT; //make send ok and out of kernal
+    nrf_event.events = EPOLLIN;// | EPOLLOUT; //make send ok and out of kernal
 
     /* init epoll struct */
     ep_fd = epoll_create(EpSize);
@@ -160,12 +162,14 @@ void *nrf_read(void *argrd)
                     events[i].events, events[i].data.fd);
             if (events[i].data.fd == nrf_fd) {
                 data_pipe = (unsigned char)((events[i].events & 0xf0) >> 4);
-                printf("pipd %x have a msg to read from pipe %d...\n",
+                printf("event %x have a msg to read from pipe %d...\n",
                                 events[i].events, data_pipe);
-                read_ctrl(events[i].events, nrf_fd);
+                read_ctrl(events[i].events);
             }
         }
-        printf("one round is over\n");
+        #ifdef DEBUG
+            printf("one round is over\n");
+        #endif
     }
 
     free(events);
