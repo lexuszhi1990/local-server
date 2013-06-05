@@ -77,7 +77,7 @@ void *serv_thread(void *vargp)
 void *do_reg(void *arg)
 {
     int sfd, confd;
-    struct sockaddr_in cli_addr;		
+    struct sockaddr_in cli_addr;
     arg_t *rarg; 
     socklen_t len = sizeof(struct sockaddr_in); 
     pthread_t tid;
@@ -91,7 +91,7 @@ void *do_reg(void *arg)
         err_sys("failed to init tcp socket...\n");
     }
 
-#ifdef DEBUG		
+#ifdef DEBUG
     printf("init the tcp sock\n"); /* for debuging... */
 #endif
     while(1){
@@ -99,7 +99,7 @@ void *do_reg(void *arg)
         confd = Accept(sfd, (SA *)&cli_addr, &len);
         Pthread_mutex_unlock(&psyc);
         Pthread_create(&tid, NULL, serv_thread, &confd);
-#ifdef DEBUG		
+#ifdef DEBUG
         printf("one client come to server: %s\n",
                 inet_ntoa(cli_addr.sin_addr));
 #endif
