@@ -39,6 +39,41 @@ int tasks(char* buf, int cfd)
     return 0;
 }
 
+int works(char *buf, int connfd)
+{
+    printf("works: %s\n", buf);
+    if (strncmp(buf, "light-1-on", 10) == 0) {
+        printf("light-1-on\n");
+        system("leds 1 1");
+    }else if (strncmp(buf, "light-1-off", 11) == 0) {
+        printf("light-1-off\n");
+        system("leds 1 0");
+    }else if (strncmp(buf, "light-2-on", 10) == 0) {
+        printf("light-2-on\n");
+        system("leds 2 1");
+    }else if (strncmp(buf, "light-2-off", 11) == 0) {
+        printf("light-2-off\n");
+        system("leds 2 0");
+    }else if (strncmp(buf, "light-3-on", 10) == 0) {
+        printf("light-3-on\n");
+        system("leds 3 1");
+    }else if (strncmp(buf, "light-3-off", 11) == 0) {
+        printf("light-3-off\n");
+        system("leds 3 0");
+    }else if (strncmp(buf, "light-4-on", 10) == 0) {
+        printf("light-4-on\n");
+        system("leds 4 1");
+    }else if (strncmp(buf, "light-4-off", 11) == 0) {
+        printf("light-4-off\n");
+        system("leds 4 0");
+    }else if (strcmp(buf, "light-end") == 0) {
+        printf("end of this connect\n");
+        return -1;
+    }
+
+    return 0;
+}
+
 void *serv_thread(void *vargp)
 {
     int res;
@@ -65,7 +100,7 @@ void *serv_thread(void *vargp)
         buf[res] = 0;
         printf("Have receve the commind : %s\n", buf);
 
-        if( tasks(buf, connfd) < 0) 
+        if( works(buf, connfd) < 0)
           break;
     }
 
